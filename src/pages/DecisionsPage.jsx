@@ -1,4 +1,4 @@
-// client/src/pages/DecisionsPage.jsx (CÓDIGO COMPLETO Y FINAL)
+// client/src/pages/DecisionsPage.jsx (CÓDIGO CON DETECCIÓN DE VICTORIA CORREGIDA)
 
 import React, { useState, useMemo } from 'react'; 
 import Notification from '../components/Notification';
@@ -87,7 +87,7 @@ const LeadershipRaceWidget = ({ ranking }) => {
 };
 
 
-// Widget de Estado de Carrera (IMPLEMENTACIÓN COMPLETA)
+// Widget de Estado de Carrera (Mantenido)
 const RaceStatusWidget = ({ kpis, settings }) => {
     let status = { text: 'Competitivo / Estable', color: 'bg-blue-100 text-blue-800 border-blue-500', icon: '⚖️' };
     const winGoalCapital = settings?.winGoal?.capital || 5000000; 
@@ -115,7 +115,7 @@ const RaceStatusWidget = ({ kpis, settings }) => {
     );
 };
 
-// Widget de Resumen de Inversión con Impacto Estimado (IMPLEMENTACIÓN COMPLETA)
+// Widget de Resumen de Inversión con Impacto Estimado (Mantenido)
 const InvestmentSummaryWidget = ({ totalInvestment, estimatedImpact, totalSelectedCount, maxCount, capitalAvailable, capitalRemaining, kpis }) => {
     const isOverspent = capitalRemaining < 0;
     
@@ -200,7 +200,7 @@ const InvestmentSummaryWidget = ({ totalInvestment, estimatedImpact, totalSelect
 };
 
 
-// Widget de Controles de Costos (IMPLEMENTACIÓN COMPLETA)
+// Widget de Controles de Costos (IMPLEMENTACIÓN COMPLETA RESTAURADA)
 const CostControlWidget = ({ kpis, updateKpis, setNotification }) => {
     
     const employeeCount = kpis?.empleados || BASE_EMPLOYEES_NEUTRAL;
