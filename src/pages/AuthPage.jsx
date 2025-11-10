@@ -1,15 +1,15 @@
-// client/src/pages/AuthPage.jsx (FRAGMENTO CORREGIDO DEL FLUJO DE REGISTRO)
+// client/src/pages/AuthPage.jsx (CÓDIGO CON ENLACES DE PIE DE PÁGINA ELIMINADOS)
 
 import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom'; 
 import { useGame } from '../context/GameContext'; 
 import Notification from '../components/Notification'; 
-import AuthForm from '../components/AuthForm'; // Asumo este componente existe
+import AuthForm from '../components/AuthForm'; 
 
 
 const AuthPage = () => {
     // Desestructuración de funciones y estado del contexto
-    const { loginUser, registerUser } = useGame(); // Note: isAuthenticated not needed here
+    const { loginUser, registerUser } = useGame(); 
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -23,19 +23,20 @@ const AuthPage = () => {
                 setNotification({ message: 'El nombre de la empresa es obligatorio.', type: 'error' });
                 return false;
             }
-            // ✅ REGISTRO: Solo registra los datos en el sistema
             registerUser(username, companyName); 
             
-            // ✅ CRÍTICO: Redirigir al modo LOGIN de la misma página /auth
+            // Redirigir al modo LOGIN de la misma página /auth
             navigate('/auth'); 
             setNotification({ message: 'Registro exitoso. ¡Inicia sesión!', type: 'success' });
             return true;
             
         } else {
             // LOGIN: Asumimos que la autenticación es exitosa
-            loginUser(username, companyName || 'Empresa Genérica'); 
+            const companyNameFromUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).companyName : 'Empresa Genérica';
             
-            // Redirigimos a la ruta base para que el Router decida (debe ir a /setup o /dashboard)
+            loginUser(username, companyNameFromUser); 
+            
+            // Redirigimos a la ruta base para que el Router decida (/setup o /dashboard)
             navigate('/');
             return true;
         }
@@ -53,7 +54,7 @@ const AuthPage = () => {
     };
 
     return (
-        <div className="flex h-screen items-center justify-center bg-gray-900">
+        <div className="flex h-screen items-center justify-center bg-gray-50">
             {/* Componente de Notificación Visible */}
             <Notification message={notification.message} type={notification.type} onClose={() => setNotification({ message: '', type: '' })} />
             
@@ -67,11 +68,14 @@ const AuthPage = () => {
                     </p>
                 </header>
                 
-                {/* Componente de Formulario */}
+                {/* Componente de Formulario (Asumo que AuthForm contiene la alternancia) */}
                 <AuthForm 
                     isRegister={isRegisterMode} 
                     onSubmit={handleAuthSubmit} 
                 />
+                
+                {/* ✅ BLOQUE DE ENLACES ELIMINADO PARA EVITAR DUPLICACIÓN */}
+                {/* Si AuthForm no tiene los enlaces, deberías moverlos DENTRO de AuthForm.jsx */}
             </div>
         </div>
     );
