@@ -1,24 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Definición de la ruta base del repositorio
-const repoName = '/business-wars-simulator/'; 
-
 export default defineConfig({
   plugins: [react()],
   
-  // 🔴 CORRECCIÓN CLAVE 1: Base ABSOLUTA.
-  base: repoName, 
+  // 🔴 SOLUCIÓN FINAL: Usar './' (punto-slash)
+  // Esto obliga al build a generar rutas RELATIVAS al index.html, 
+  // que es lo que GitHub Pages maneja correctamente en subdirectorios.
+  base: './', 
   
-  // 🔴 CORRECCIÓN CLAVE 2: Forzar la salida de build para compatibilidad con gh-pages
-  build: {
-    // Es posible que necesites esta propiedad si estás usando gh-pages
-    outDir: 'dist', 
-    // Aseguramos que la aplicación se cargue como módulo.
-    assetsDir: 'assets', 
-  },
-  
-  // Configuraciones de servidor de desarrollo (para desarrollo local)
+  // Configuraciones de servidor de desarrollo (se mantiene la lógica de main.jsx para el router)
   server: {
     open: true, 
   }

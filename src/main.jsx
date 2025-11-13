@@ -6,11 +6,8 @@ import './index.css'
 
 import { HashRouter } from 'react-router-dom'; 
 
-// 🔴 CORRECCIÓN CLAVE: Usamos la variable PROD de Vite
-// Si es PROD (despliegue), usa la subcarpeta. Si no (DEV), usa la raíz '/'.
-const BASE_PATH = import.meta.env.PROD 
-    ? '/business-wars-simulator/' 
-    : '/'; 
+// 🔴 AJUSTE: El basename debe ser la ruta del repositorio para que el HashRouter funcione.
+const BASE_PATH = '/business-wars-simulator/'; 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
