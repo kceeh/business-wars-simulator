@@ -1,23 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig(({ command }) => {
-  
-  // Determinamos si estamos en producción (comando 'build')
-  const isProd = command === 'build';
-  // Define el nombre del repositorio
-  const repoName = '/business-wars-simulator/'; 
+// Define el nombre del repositorio
+const repoName = '/business-wars-simulator/'; 
 
-  return {
-    plugins: [react()],
-    
-    // 🔴 CORRECCIÓN CLAVE: base debe ser la ruta del repositorio en producción, 
-    // y la raíz ('/') en desarrollo para evitar el conflicto.
-    base: isProd ? repoName : '/', 
-    
-    // Configuraciones de servidor de desarrollo (opcional)
-    server: {
-      open: true, // Abrir automáticamente en el navegador
-    }
+export default defineConfig({
+  plugins: [react()],
+  
+  // 🔴 CAMBIO CLAVE: Usamos el repoName ABSOLUTO para asegurar el deploy.
+  // Esto obliga al build a usar la subcarpeta para todos los assets.
+  base: repoName, 
+  
+  // Configuraciones de servidor de desarrollo (se mantiene la lógica de main.jsx para el router)
+  server: {
+    // Es posible que al hacer 'npm run dev' debas acceder a:
+    // http://localhost:5173/business-wars-simulator/
+    open: true, 
   }
 });
