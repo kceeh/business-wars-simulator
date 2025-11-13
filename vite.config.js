@@ -1,23 +1,23 @@
-// vite.config.js
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-
-// Define el nombre del repositorio
-const repoName = '/business-wars-simulator/'; 
 
 export default defineConfig(({ command }) => {
   
   // Determinamos si estamos en producción (comando 'build')
   const isProd = command === 'build';
+  // Define el nombre del repositorio
+  const repoName = '/business-wars-simulator/'; 
 
   return {
     plugins: [react()],
     
-    // 🔴 Configuración del base:
-    // Para 'build', usamos la subcarpeta. 
-    // Para 'dev', se omite la propiedad, forzando la base a la raíz ('/').
+    // 🔴 CORRECCIÓN CLAVE: base debe ser la ruta del repositorio en producción, 
+    // y la raíz ('/') en desarrollo para evitar el conflicto.
     base: isProd ? repoName : '/', 
     
-    // No necesitamos definir VITE_APP_BASE_PATH aquí, ya que main.jsx usa import.meta.env.PROD
+    // Configuraciones de servidor de desarrollo (opcional)
+    server: {
+      open: true, // Abrir automáticamente en el navegador
+    }
   }
 });

@@ -10,7 +10,7 @@ import { HashRouter } from 'react-router-dom';
 // Si es PROD (despliegue), usa la subcarpeta. Si no (DEV), usa la raíz '/'.
 const BASE_PATH = import.meta.env.PROD 
     ? '/business-wars-simulator/' 
-    : '/'; // Usar la raíz en desarrollo
+    : '/'; 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

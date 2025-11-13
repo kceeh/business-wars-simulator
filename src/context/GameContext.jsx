@@ -7,6 +7,7 @@ const GameContext = createContext();
 
 // --- ESTADO INICIAL COMPLETO Y SEGURO ---
 const INITIAL_GAME_STATE = {
+    // ... (El resto de INITIAL_GAME_STATE permanece igual)
     nombreEmpresa: '', 
     capital: 500000,
     ingresos: 100000,
@@ -68,12 +69,16 @@ export const GameProvider = ({ children }) => {
 
       useEffect(() => {
         const storedUser = localStorage.getItem('user');
-        if (storedUser) {
+        // 🔴 NUEVA LÍNEA CLAVE: Chequeamos la bandera de sesión activa.
+        const storedIsAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+        // Solo carga si hay datos de usuario Y la sesión está marcada como activa
+        if (storedUser && storedIsAuthenticated) {
             const parsedUser = JSON.parse(storedUser);
             setUser(parsedUser);
-            setIsAuthenticated(true);
+            setIsAuthenticated(true); // 👈 SOLO si storedIsAuthenticated es true
             
-            // ✅ CORRECCIÓN 3: Al cargar la página, se carga el avance guardado
+            // ✅ CORRECCIÓN: Al cargar la página, se carga el avance guardado
             const storedGameState = localStorage.getItem(`gameState_${parsedUser.username}`);
             if (storedGameState) {
                 setGameState(JSON.parse(storedGameState));
@@ -81,6 +86,8 @@ export const GameProvider = ({ children }) => {
                 setGameState(INITIAL_GAME_STATE);
             }
         } else {
+             // Si no hay sesión activa, o no hay usuario, solo inicializamos el estado de juego
+             // y mantenemos isAuthenticated en false.
               setGameState(INITIAL_GAME_STATE);
         }
 
@@ -93,7 +100,7 @@ export const GameProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('isAuthenticated', 'true');
         
-        // 🔴 CORRECCIÓN 1: Al iniciar sesión, cargamos el estado de juego guardado
+        // 🔴 CORRECCIÓN: Al iniciar sesión, cargamos el estado de juego guardado
         const storedGameState = localStorage.getItem(`gameState_${userData.username}`);
         if (storedGameState) {
             setGameState(JSON.parse(storedGameState));
@@ -103,21 +110,41 @@ export const GameProvider = ({ children }) => {
         }
     };
 
-    // 🔴 MODIFICACIÓN CLAVE AQUÍ: Ahora se acepta y guarda la contraseña para simular la validación.
+    // 🔴 MODIFICACIÓN: Añadiendo validación de usuario existente y campos obligatorios
     const registerUser = (username, password, companyName) => {
-        // En un contexto real, aquí se cifraría la contraseña y se guardaría en una BD.
+        // Validación básica de campos
+        if (!username || !password || !companyName) {
+            return { success: false, message: "Todos los campos son obligatorios." };
+        }
+
+        // 1. COMPARAR QUE EL USUARIO NO ESTÉ CREADO
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                const parsedUser = JSON.parse(storedUser);
+                // NOTA: En este contexto simple, solo se soporta un usuario guardado a la vez
+                // Si ya hay un usuario guardado, asumimos que ya está registrado.
+                if (parsedUser.username === username) {
+                    return { success: false, message: `El usuario '${username}' ya existe.` };
+                }
+            } catch (e) {
+                // Manejo de error si el JSON es inválido
+            }
+        }
+
+        // 2. Si no existe o no hay ningún usuario previo, procedemos al registro
         const userData = { username, password, companyName };
-        // Para la simulación, guardamos el objeto completo.
         localStorage.setItem('user', JSON.stringify(userData)); 
+
+        return { success: true, message: "Registro exitoso." };
     };
 
     const logoutUser = () => {
         setUser(null);
         setIsAuthenticated(false);
-        // 🛑 CORRECCIÓN 2: Comentamos esta línea para mantener las credenciales del usuario,
-        // lo que permite el reingreso y evita perder los datos para la próxima validación.
+        // 🛑 CORRECCIÓN: Mantenemos las credenciales.
         // localStorage.removeItem('user'); 
-        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('isAuthenticated'); // 👈 ESTO ELIMINA LA SESIÓN ACTIVA
         setGameState(INITIAL_GAME_STATE); 
     };
 
