@@ -23,7 +23,8 @@ const AuthPage = () => {
                 setNotification({ message: 'El nombre de la empresa es obligatorio.', type: 'error' });
                 return false;
             }
-            registerUser(username, companyName); 
+            // 🔴 MODIFICACIÓN CLAVE: Pasamos la contraseña al registro
+            registerUser(username, password, companyName); 
             
             // Redirigir al modo LOGIN de la misma página /auth
             navigate('/auth'); 
@@ -31,14 +32,28 @@ const AuthPage = () => {
             return true;
             
         } else {
-            // LOGIN: Asumimos que la autenticación es exitosa
-            const companyNameFromUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).companyName : 'Empresa Genérica';
+            // LOGIN:
             
-            loginUser(username, companyNameFromUser); 
+            const storedUser = localStorage.getItem('user');
             
-            // Redirigimos a la ruta base para que el Router decida (/setup o /dashboard)
-            navigate('/');
-            return true;
+            if (storedUser) {
+                const parsedUser = JSON.parse(storedUser);
+                
+                // 🛑 VALIDACIÓN FINAL: Comparamos el nombre de usuario Y la contraseña.
+                if (parsedUser.username === username && parsedUser.password === password) { 
+                    
+                    // Si ambos coinciden, establecemos la sesión con el objeto guardado.
+                    loginUser(parsedUser); 
+                    
+                    // Redirigimos a la ruta base para que el Router decida (/setup o /dashboard)
+                    navigate('/');
+                    return true;
+                }
+            }
+            
+            // Si no se encuentra el usuario, no coincide el nombre o la contraseña
+            setNotification({ message: 'Usuario o Contraseña inválidos.', type: 'error' });
+            return false;
         }
     };
 

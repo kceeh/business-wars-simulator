@@ -52,7 +52,7 @@ const getGlobalRanking = (kpis, rivals) => {
 };
 
 
-// ✅ WIDGET: Carrera de Liderazgo (IMPLEMENTACIÓN COMPLETA)
+// ✅ WIDGET: Carrera de Liderazgo (RESTABLECIDO)
 const LeadershipRaceWidget = ({ ranking }) => {
     return (
         <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-green-500 mb-6">
@@ -572,7 +572,38 @@ const DecisionsPage = () => {
         navigate('/setup'); 
     };
 
-    if (kpis.isGameOver) { /* ... */ }
+    if (kpis.isGameOver) { 
+        const isWin = kpis.winCondition === 'win';
+        const message = isWin 
+            ? `¡Felicidades! 🎉 ${kpis.nombreEmpresa} ha alcanzado la meta de Capital y Cuota de Mercado.` 
+            : `¡Una pena! 💀 El Capital de ${kpis.nombreEmpresa} ha caído a cero, finalizando el juego.`;
+        const color = isWin ? 'bg-green-700' : 'bg-red-700';
+        const textColor = isWin ? 'text-green-700' : 'text-red-700';
+        const borderColor = isWin ? 'border-green-500' : 'border-red-500';
+
+        // RETORNA ESTE JSX DE INMEDIATO, IGNORANDO EL RESTO DEL CÓDIGO
+        return (
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-95 p-4">
+                <div className={`bg-white p-10 rounded-xl shadow-2xl max-w-lg w-full text-center transform transition duration-500 scale-100 border-4 border-dashed ${borderColor}`}>
+                    <p className="text-8xl mb-4">{isWin ? '🏆' : '📉'}</p>
+                    <h1 className={`text-4xl font-extrabold mb-3 ${textColor}`}>{isWin ? '¡VICTORIA EMPRESARIAL!' : '¡CAPITAL CERO!'}</h1>
+                    <p className="text-xl text-gray-800 mb-6">{message}</p>
+                    <div className="space-y-2 text-left bg-gray-50 p-4 rounded">
+                        <p className="font-semibold">Semana Final: <span className="font-bold">{kpis.semanaActual}</span></p>
+                        <p className="font-semibold">Capital Final: <span className="font-bold text-green-600">${kpis.capital.toLocaleString('es-CL')}</span></p>
+                        <p className="font-semibold">Cuota Final: <span className="font-bold text-blue-600">{kpis.cuotaMercado.toFixed(2)}%</span></p>
+                    </div>
+                    
+                    <button 
+                        onClick={handleRestartGame} 
+                        className={`mt-6 w-full px-6 py-3 ${color} text-white font-bold rounded-lg hover:opacity-90 transition`}
+                    >
+                        Volver a Empezar
+                    </button>
+                </div>
+            </div>
+        );
+    } // CIERRE DEL BLOQUE isGameOver
 
     return (
         <div className="p-4 bg-gray-50 min-h-full">

@@ -1,7 +1,7 @@
 // client/src/context/GameContext.jsx (CORRECCIÓN FINAL DE LA INICIALIZACIÓN DE RIVALES)
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { mockRivalData } from '../data/mockData'; // ✅ CRÍTICO: Asegurar la correcta importación
+import { mockRivalData } from '../data/mockData'; 
 
 const GameContext = createContext();
 
@@ -66,13 +66,14 @@ export const GameProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
 
-     useEffect(() => {
+      useEffect(() => {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
             const parsedUser = JSON.parse(storedUser);
             setUser(parsedUser);
             setIsAuthenticated(true);
             
+            // ✅ CORRECCIÓN 3: Al cargar la página, se carga el avance guardado
             const storedGameState = localStorage.getItem(`gameState_${parsedUser.username}`);
             if (storedGameState) {
                 setGameState(JSON.parse(storedGameState));
@@ -80,29 +81,42 @@ export const GameProvider = ({ children }) => {
                 setGameState(INITIAL_GAME_STATE);
             }
         } else {
-             setGameState(INITIAL_GAME_STATE);
+              setGameState(INITIAL_GAME_STATE);
         }
 
         setIsLoading(false);
     }, []);
 
-    const loginUser = (username, companyName) => {
-        const userData = { username, companyName };
+    const loginUser = (userData) => { 
         setUser(userData);
         setIsAuthenticated(true);
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('isAuthenticated', 'true');
+        
+        // 🔴 CORRECCIÓN 1: Al iniciar sesión, cargamos el estado de juego guardado
+        const storedGameState = localStorage.getItem(`gameState_${userData.username}`);
+        if (storedGameState) {
+            setGameState(JSON.parse(storedGameState));
+        } else {
+            // Si no hay estado guardado, inicializamos uno.
+            setGameState(INITIAL_GAME_STATE);
+        }
     };
 
-    const registerUser = (username, companyName) => {
-        const userData = { username, companyName };
-        localStorage.setItem('user', JSON.stringify(userData));
+    // 🔴 MODIFICACIÓN CLAVE AQUÍ: Ahora se acepta y guarda la contraseña para simular la validación.
+    const registerUser = (username, password, companyName) => {
+        // En un contexto real, aquí se cifraría la contraseña y se guardaría en una BD.
+        const userData = { username, password, companyName };
+        // Para la simulación, guardamos el objeto completo.
+        localStorage.setItem('user', JSON.stringify(userData)); 
     };
 
     const logoutUser = () => {
         setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem('user');
+        // 🛑 CORRECCIÓN 2: Comentamos esta línea para mantener las credenciales del usuario,
+        // lo que permite el reingreso y evita perder los datos para la próxima validación.
+        // localStorage.removeItem('user'); 
         localStorage.removeItem('isAuthenticated');
         setGameState(INITIAL_GAME_STATE); 
     };
@@ -115,8 +129,8 @@ export const GameProvider = ({ children }) => {
 
     const resetGame = (username) => {
         const resetState = { 
-             ...INITIAL_GAME_STATE, 
-             nombreEmpresa: gameState?.nombreEmpresa || 'Mi Startup'
+              ...INITIAL_GAME_STATE, 
+              nombreEmpresa: gameState?.nombreEmpresa || 'Mi Startup'
         };
         setGameState(resetState);
         const currentUsername = username || user?.username || 'player';
