@@ -1,7 +1,4 @@
-// client/src/App.jsx (CÓDIGO CORREGIDO PARA FALLO DE INICIO)
-
 import React, { useEffect } from 'react';
-// 🔴 CORRECCIÓN 1: Eliminamos 'BrowserRouter as Router' de la importación
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
@@ -13,23 +10,24 @@ import Sidebar from './components/Sidebar';
 import { GameProvider, useGame } from './context/GameContext'; 
 import './index.css'; 
 
-// Este componente consume el contexto y maneja el enrutamiento
 const AppContent = () => {
     const { isAuthenticated, logoutUser, isLoading, user, gameState } = useGame(); 
 
     useEffect(() => {
-        // Lógica de desautenticación (mantenida)
         if (localStorage.getItem('isAuthenticated') === 'true' && !user && !isLoading) {
-            logoutUser(); window.location.href = '/'; 
+            logoutUser(); 
+            window.location.href = '/'; 
         }
-    }, [user, isAuthenticated, isLoading]);
+    }, [user, isAuthenticated, isLoading, logoutUser]);
 
-    const handleLogout = () => { logoutUser(); window.location.href = '/'; };
+    const handleLogout = () => { 
+        logoutUser(); 
+        window.location.href = '/'; 
+    };
 
     const AuthenticatedLayout = ({ component: Component }) => (
       isAuthenticated ? (
         <div className="flex min-h-screen">
-          {/* Sidebar solo si gameState tiene datos básicos para evitar errores de renderizado */}
           {(gameState?.nombreEmpresa) && <Sidebar onLogout={handleLogout} />} 
           <main className={`flex-grow p-4 md:p-8 overflow-y-auto ${!(gameState?.nombreEmpresa) ? 'w-full' : ''}`}>
             <Component /> 
@@ -38,42 +36,48 @@ const AppContent = () => {
       ) : <Navigate to="/" />
     );
     
-    // CRÍTICO: Si está cargando, o el gameState es nulo, no intentar renderizar nada complejo.
-    if (isLoading || !gameState) return <div className="flex h-screen items-center justify-center bg-gray-900 text-white">Cargando...</div>;
+    if (isLoading || !gameState) {
+        return <div className="flex h-screen items-center justify-center bg-gray-900 text-white">Cargando...</div>;
+    }
 
-    // Determina si el juego ha sido configurado (usando una propiedad clave como nombreEmpresa)
     const isGameSetup = !!gameState.nombreEmpresa;
 
     return (
-        // 🔴 CORRECCIÓN 2: Eliminamos la etiqueta <Router> que envolvía Routes
+        // ✅ SOLO Routes aquí - HashRouter ya está en main.jsx
         <Routes>
           <Route 
               path="/" 
               element={
                   isAuthenticated ? 
                       (isGameSetup ? 
-                          <Navigate to="/decisions" /> // Juego configurado
-                        : <Navigate to="/setup" />)   // Juego no configurado
-                    : <LandingPage /> // No autenticado
+                          <Navigate to="/decisions" /> 
+                        : <Navigate to="/setup" />) 
+                    : <LandingPage /> 
               } 
           /> 
           <Route path="/auth" element={isAuthenticated ? <Navigate to="/" /> : <AuthPage />} /> 
           
-          {/* Setup Page */}
           <Route 
               path="/setup" 
               element={<AuthenticatedLayout component={SetupPage} />} 
           />
 
-          {/* Rutas del juego: Solo accesibles si isGameSetup es verdadero */}
           <Route path="/dashboard" element={isGameSetup ? <AuthenticatedLayout component={DashboardPage} /> : <Navigate to="/setup" />} />
           <Route path="/decisions" element={isGameSetup ? <AuthenticatedLayout component={DecisionsPage} /> : <Navigate to="/setup" />} /> 
           <Route path="/reports" element={isGameSetup ? <AuthenticatedLayout component={ReportsPage} /> : <Navigate to="/setup" />} />
           
-          <Route path="*" element={<Navigate to="/" />} />
+          {/* ✅ Ruta 404 para HashRouter */}
+          <Route path="*" element={<div className="flex items-center justify-center h-screen">
+            <h1>Página no encontrada</h1>
+          </div>} />
         </Routes>
-        // 🔴 Se eliminó la etiqueta de cierre </Router>
     );
 }
 
-export default function App() { return <GameProvider><AppContent /></GameProvider>; }
+export default function App() { 
+    return (
+        <GameProvider>
+            <AppContent />
+        </GameProvider>
+    ); 
+}
