@@ -1,23 +1,25 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig(({ command }) => {
-  
-  // Determinamos si estamos en producción (comando 'build')
-  const isProd = command === 'build';
-  // Define el nombre del repositorio
-  const repoName = '/business-wars-simulator/'; 
+// Definición de la ruta base del repositorio
+const repoName = '/business-wars-simulator/'; 
 
-  return {
-    plugins: [react()],
-    
-    // ✅ CORRECCIÓN CLAVE: Base condicional para el build.
-    // Esto funciona correctamente cuando el script de build no interfiere.
-    base: isProd ? repoName : '/', 
-    
-    // Configuraciones de servidor de desarrollo (opcional)
-    server: {
-      open: true, // Abrir automáticamente en el navegador
-    }
+export default defineConfig({
+  plugins: [react()],
+  
+  // 🔴 CORRECCIÓN CLAVE 1: Base ABSOLUTA.
+  base: repoName, 
+  
+  // 🔴 CORRECCIÓN CLAVE 2: Forzar la salida de build para compatibilidad con gh-pages
+  build: {
+    // Es posible que necesites esta propiedad si estás usando gh-pages
+    outDir: 'dist', 
+    // Aseguramos que la aplicación se cargue como módulo.
+    assetsDir: 'assets', 
+  },
+  
+  // Configuraciones de servidor de desarrollo (para desarrollo local)
+  server: {
+    open: true, 
   }
 });
