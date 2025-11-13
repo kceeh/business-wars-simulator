@@ -6,13 +6,13 @@ import './index.css'
 // 🛑 CLAVE: Usar HashRouter
 import { HashRouter } from 'react-router-dom'; 
 
-// CLAVE: El basename debe ser la ruta del repositorio
+// CLAVE: El basename debe coincidir con la base de vite.config.js
 const BASE_PATH = '/business-wars-simulator/'; 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <HashRouter basename={BASE_PATH}> 
-  _     <App />
-    </HashRouter>
-  </React.StrictMode>,
+  <React.StrictMode>
+    <HashRouter basename={BASE_PATH}> 
+      <App />
+    </HashRouter>
+  </React.StrictMode>,
 )
