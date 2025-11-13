@@ -24,6 +24,7 @@ const Sidebar = () => {
     const handleLogoutClick = () => {
         logoutUser(); 
         navigate('/'); 
+        window.scrollTo(0, 0)
     };
 
 

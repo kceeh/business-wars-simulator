@@ -1,4 +1,4 @@
-// client/src/context/GameContext.jsx (CORRECCIÓN FINAL DE LA INICIALIZACIÓN DE RIVALES)
+// client/src/context/GameContext.jsx (CORRECCIÓN PARA MÚLTIPLES USUARIOS)
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { mockRivalData } from '../data/mockData'; 
@@ -7,7 +7,6 @@ const GameContext = createContext();
 
 // --- ESTADO INICIAL COMPLETO Y SEGURO ---
 const INITIAL_GAME_STATE = {
-    // ... (El resto de INITIAL_GAME_STATE permanece igual)
     nombreEmpresa: '', 
     capital: 500000,
     ingresos: 100000,
@@ -22,7 +21,6 @@ const INITIAL_GAME_STATE = {
     nivelMarketing: 0,
     nivelEficiencia: 0, 
     
-    // ✅ INICIALIZACIÓN DE RIVALES (SEGURO)
     rivalsData: mockRivalData.map(r => ({ 
         ...r, 
         lastInvestment: 'Esperando...', 
@@ -31,7 +29,6 @@ const INITIAL_GAME_STATE = {
         cuotaMercado: 15.00
     })),
 
-    // ... (Inicialización de ChartData) ...
     revenueChartData: { 
         labels: ['S0'], 
         datasets: [{ label: 'Ingresos', data: [100000], borderColor: '#3B82F6', backgroundColor: 'rgba(59, 130, 246, 0.5)' }] 
@@ -57,8 +54,43 @@ const INITIAL_GAME_STATE = {
     },
     lastDecisions: [],
 };
-// ----------------------------------------------------
 
+// 🔑 CLAVE: Funciones helper para manejar múltiples usuarios
+const getUsers = () => {
+    try {
+        const users = localStorage.getItem('businessWars_users');
+        return users ? JSON.parse(users) : [];
+    } catch (error) {
+        console.error('Error al cargar usuarios:', error);
+        return [];
+    }
+};
+
+const saveUser = (userData) => {
+    try {
+        const users = getUsers();
+        const existingUserIndex = users.findIndex(u => u.username === userData.username);
+        
+        if (existingUserIndex >= 0) {
+            // Actualizar usuario existente
+            users[existingUserIndex] = userData;
+        } else {
+            // Agregar nuevo usuario
+            users.push(userData);
+        }
+        
+        localStorage.setItem('businessWars_users', JSON.stringify(users));
+        return true;
+    } catch (error) {
+        console.error('Error al guardar usuario:', error);
+        return false;
+    }
+};
+
+const findUserByUsername = (username) => {
+    const users = getUsers();
+    return users.find(u => u.username === username);
+};
 
 export const GameProvider = ({ children }) => {
     const [gameState, setGameState] = useState(null);
@@ -66,29 +98,31 @@ export const GameProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-
-      useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        // 🔴 NUEVA LÍNEA CLAVE: Chequeamos la bandera de sesión activa.
+    useEffect(() => {
+        const storedUsername = localStorage.getItem('currentUser');
         const storedIsAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
 
-        // Solo carga si hay datos de usuario Y la sesión está marcada como activa
-        if (storedUser && storedIsAuthenticated) {
-            const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
-            setIsAuthenticated(true); // 👈 SOLO si storedIsAuthenticated es true
-            
-            // ✅ CORRECCIÓN: Al cargar la página, se carga el avance guardado
-            const storedGameState = localStorage.getItem(`gameState_${parsedUser.username}`);
-            if (storedGameState) {
-                setGameState(JSON.parse(storedGameState));
+        if (storedUsername && storedIsAuthenticated) {
+            const foundUser = findUserByUsername(storedUsername);
+            if (foundUser) {
+                setUser(foundUser);
+                setIsAuthenticated(true);
+                
+                // Cargar estado del juego específico del usuario
+                const storedGameState = localStorage.getItem(`gameState_${foundUser.username}`);
+                if (storedGameState) {
+                    setGameState(JSON.parse(storedGameState));
+                } else {
+                    setGameState(INITIAL_GAME_STATE);
+                }
             } else {
+                // Usuario no encontrado en la lista, limpiar sesión
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('isAuthenticated');
                 setGameState(INITIAL_GAME_STATE);
             }
         } else {
-             // Si no hay sesión activa, o no hay usuario, solo inicializamos el estado de juego
-             // y mantenemos isAuthenticated en false.
-              setGameState(INITIAL_GAME_STATE);
+            setGameState(INITIAL_GAME_STATE);
         }
 
         setIsLoading(false);
@@ -97,44 +131,43 @@ export const GameProvider = ({ children }) => {
     const loginUser = (userData) => { 
         setUser(userData);
         setIsAuthenticated(true);
-        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('currentUser', userData.username);
         localStorage.setItem('isAuthenticated', 'true');
         
-        // 🔴 CORRECCIÓN: Al iniciar sesión, cargamos el estado de juego guardado
+        // Cargar estado del juego del usuario
         const storedGameState = localStorage.getItem(`gameState_${userData.username}`);
         if (storedGameState) {
             setGameState(JSON.parse(storedGameState));
         } else {
-            // Si no hay estado guardado, inicializamos uno.
             setGameState(INITIAL_GAME_STATE);
         }
     };
 
-    // 🔴 MODIFICACIÓN: Añadiendo validación de usuario existente y campos obligatorios
     const registerUser = (username, password, companyName) => {
         // Validación básica de campos
         if (!username || !password || !companyName) {
             return { success: false, message: "Todos los campos son obligatorios." };
         }
 
-        // 1. COMPARAR QUE EL USUARIO NO ESTÉ CREADO
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                const parsedUser = JSON.parse(storedUser);
-                // NOTA: En este contexto simple, solo se soporta un usuario guardado a la vez
-                // Si ya hay un usuario guardado, asumimos que ya está registrado.
-                if (parsedUser.username === username) {
-                    return { success: false, message: `El usuario '${username}' ya existe.` };
-                }
-            } catch (e) {
-                // Manejo de error si el JSON es inválido
-            }
+        // Verificar si el usuario ya existe
+        const existingUser = findUserByUsername(username);
+        if (existingUser) {
+            return { success: false, message: `El usuario '${username}' ya existe.` };
         }
 
-        // 2. Si no existe o no hay ningún usuario previo, procedemos al registro
-        const userData = { username, password, companyName };
-        localStorage.setItem('user', JSON.stringify(userData)); 
+        // Crear nuevo usuario
+        const userData = { 
+            username, 
+            password, 
+            companyName,
+            createdAt: new Date().toISOString()
+        };
+
+        // Guardar en la lista de usuarios
+        const saved = saveUser(userData);
+        if (!saved) {
+            return { success: false, message: "Error al guardar el usuario." };
+        }
 
         return { success: true, message: "Registro exitoso." };
     };
@@ -142,29 +175,32 @@ export const GameProvider = ({ children }) => {
     const logoutUser = () => {
         setUser(null);
         setIsAuthenticated(false);
-        // 🛑 CORRECCIÓN: Mantenemos las credenciales.
-        // localStorage.removeItem('user'); 
-        localStorage.removeItem('isAuthenticated'); // 👈 ESTO ELIMINA LA SESIÓN ACTIVA
-        setGameState(INITIAL_GAME_STATE); 
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('isAuthenticated');
+        setGameState(INITIAL_GAME_STATE);
     };
 
     const saveGameState = (username, newState) => {
         setGameState(newState);
-        const currentUsername = username || user?.username || 'player'; 
-        localStorage.setItem(`gameState_${currentUsername}`, JSON.stringify(newState));
+        const currentUsername = username || user?.username;
+        if (currentUsername) {
+            localStorage.setItem(`gameState_${currentUsername}`, JSON.stringify(newState));
+        }
     };
 
     const resetGame = (username) => {
         const resetState = { 
-              ...INITIAL_GAME_STATE, 
-              nombreEmpresa: gameState?.nombreEmpresa || 'Mi Startup'
+            ...INITIAL_GAME_STATE, 
+            nombreEmpresa: gameState?.nombreEmpresa || 'Mi Startup'
         };
         setGameState(resetState);
-        const currentUsername = username || user?.username || 'player';
-        localStorage.removeItem(`gameState_${currentUsername}`);
+        const currentUsername = username || user?.username;
+        if (currentUsername) {
+            localStorage.removeItem(`gameState_${currentUsername}`);
+        }
     };
     
-    // ✅ FUNCIÓN CRÍTICA MODIFICADA: CREACIÓN DE JUEGO CON LÓGICA DE DIFICULTAD
+    // ✅ FUNCIÓN CRÍTICA MODIFICADA: CREACIÓN DE JUEGO
     const createNewGame = (data) => {
         const startingCapital = data.startingCapital || INITIAL_GAME_STATE.capital;
         const initialMarketShare = data.initialMarketShare || INITIAL_GAME_STATE.cuotaMercado;
@@ -173,21 +209,16 @@ export const GameProvider = ({ children }) => {
         let rivalCapital = 0;
         let rivalCuota = 0;
         
-        // --- LÓGICA DE DIFICULTAD/START JUSTO ---
         if (data.difficultyKey === 'easy') {
-            // IGUALDAD ABSOLUTA
             rivalCapital = startingCapital;
             rivalCuota = initialMarketShare;
         } else {
-            // Nivel Normal/Difícil: Aplica variación aleatoria y valores base de IA
             const baseCap = data.difficultyKey === 'medium' ? 3000000 : 5000000;
             const baseShare = data.difficultyKey === 'medium' ? 12.00 : 15.00;
-
             rivalCapital = baseCap + (Math.random() * 100000); 
             rivalCuota = baseShare + (Math.random() * 1.0); 
         }
         
-        // ✅ CRÍTICO: Inicialización de la IA con los datos calculados
         const initialRivalData = mockRivalData.map(r => ({ 
             ...r, 
             capital: rivalCapital, 
@@ -196,7 +227,6 @@ export const GameProvider = ({ children }) => {
             lastActionEffect: 'Sin actividad' 
         }));
 
-
         const newState = {
             ...INITIAL_GAME_STATE,
             nombreEmpresa: data.companyName,
@@ -204,12 +234,8 @@ export const GameProvider = ({ children }) => {
             ingresos: initialRevenue,
             cuotaMercado: initialMarketShare,
             settings: data.settings, 
-            semanaActual: 1, 
-            
-            // ✅ GUARDANDO LA DATA DE RIVALES EN EL ESTADO
-            rivalsData: initialRivalData, 
-            
-            // Inicialización de gráficos en S1 
+            semanaActual: 1,
+            rivalsData: initialRivalData,
             revenueChartData: { 
                 labels: ['S1'], 
                 datasets: [{ label: 'Ingresos', data: [initialRevenue], borderColor: '#3B82F6', backgroundColor: 'rgba(59, 130, 246, 0.5)' }] 
@@ -233,14 +259,12 @@ export const GameProvider = ({ children }) => {
         saveGameState(data.username, newState);
     };
 
-
     const value = {
         user,
         isAuthenticated,
         loginUser, 
         registerUser,
         logoutUser, 
-        
         gameState,
         isLoading,
         saveGameState,

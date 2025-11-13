@@ -1,4 +1,4 @@
-// client/src/pages/AuthPage.jsx (CÓDIGO CON ENLACES DE PIE DE PÁGINA ELIMINADOS)
+// client/src/pages/AuthPage.jsx (CORRECCIÓN PARA MÚLTIPLES USUARIOS)
 
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom'; 
@@ -6,9 +6,7 @@ import { useGame } from '../context/GameContext';
 import Notification from '../components/Notification'; 
 import AuthForm from '../components/AuthForm'; 
 
-
 const AuthPage = () => {
-    // Desestructuración de funciones y estado del contexto
     const { loginUser, registerUser } = useGame(); 
     const navigate = useNavigate();
     const location = useLocation();
@@ -16,50 +14,50 @@ const AuthPage = () => {
     const isRegisterMode = location.search.includes('mode=register');
     const [notification, setNotification] = useState({ message: '', type: '' });
     
-    // Lógica que determina si se llama a login o register
     const handleAuthLogic = ({ username, password, companyName }) => {
         if (isRegisterMode) {
             if (!companyName) {
                 setNotification({ message: 'El nombre de la empresa es obligatorio.', type: 'error' });
                 return false;
             }
-            // 🔴 MODIFICACIÓN CLAVE: Pasamos la contraseña al registro
-            registerUser(username, password, companyName); 
             
-            // Redirigir al modo LOGIN de la misma página /auth
-            navigate('/auth'); 
-            setNotification({ message: 'Registro exitoso. ¡Inicia sesión!', type: 'success' });
-            return true;
-            
-        } else {
-            // LOGIN:
-            
-            const storedUser = localStorage.getItem('user');
-            
-            if (storedUser) {
-                const parsedUser = JSON.parse(storedUser);
-                
-                // 🛑 VALIDACIÓN FINAL: Comparamos el nombre de usuario Y la contraseña.
-                if (parsedUser.username === username && parsedUser.password === password) { 
-                    
-                    // Si ambos coinciden, establecemos la sesión con el objeto guardado.
-                    loginUser(parsedUser); 
-                    
-                    // Redirigimos a la ruta base para que el Router decida (/setup o /dashboard)
-                    navigate('/');
-                    return true;
-                }
+            const result = registerUser(username, password, companyName);
+            if (result.success) {
+                // Redirigir al modo LOGIN después del registro exitoso
+                navigate('/auth');
+                setNotification({ message: result.message, type: 'success' });
+                return true;
+            } else {
+                setNotification({ message: result.message, type: 'error' });
+                return false;
             }
             
-            // Si no se encuentra el usuario, no coincide el nombre o la contraseña
+        } else {
+            // LOGIN: Buscar usuario en la lista de usuarios
+            const getUsers = () => {
+                try {
+                    const users = localStorage.getItem('businessWars_users');
+                    return users ? JSON.parse(users) : [];
+                } catch (error) {
+                    return [];
+                }
+            };
+
+            const users = getUsers();
+            const foundUser = users.find(u => u.username === username && u.password === password);
+            
+            if (foundUser) {
+                loginUser(foundUser);
+                navigate('/');
+                return true;
+            }
+            
             setNotification({ message: 'Usuario o Contraseña inválidos.', type: 'error' });
             return false;
         }
     };
 
-    // Manejador del submit del formulario
     const handleAuthSubmit = (formData) => {
-        // Validación básica
         if (!formData.username || !formData.password) {
             setNotification({ message: 'Usuario y Contraseña son obligatorios.', type: 'error' });
             return;
@@ -70,7 +68,6 @@ const AuthPage = () => {
 
     return (
         <div className="flex h-screen items-center justify-center bg-gray-50">
-            {/* Componente de Notificación Visible */}
             <Notification message={notification.message} type={notification.type} onClose={() => setNotification({ message: '', type: '' })} />
             
             <div className="p-8 bg-white rounded-xl shadow-2xl max-w-md w-full">
@@ -83,14 +80,10 @@ const AuthPage = () => {
                     </p>
                 </header>
                 
-                {/* Componente de Formulario (Asumo que AuthForm contiene la alternancia) */}
                 <AuthForm 
                     isRegister={isRegisterMode} 
                     onSubmit={handleAuthSubmit} 
                 />
-                
-                {/* ✅ BLOQUE DE ENLACES ELIMINADO PARA EVITAR DUPLICACIÓN */}
-                {/* Si AuthForm no tiene los enlaces, deberías moverlos DENTRO de AuthForm.jsx */}
             </div>
         </div>
     );
