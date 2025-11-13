@@ -1,11 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Eliminamos toda la lógica de base
+// Usamos la base absoluta, necesaria para el build
+const repoName = '/business-wars-simulator/'; 
+
 export default defineConfig({
   plugins: [react()],
   
-  // Base eliminada
+  // 🔴 Base para el BUILD: Esto corrige la carga de assets.
+  base: repoName, 
   
   server: {
     open: true, 
