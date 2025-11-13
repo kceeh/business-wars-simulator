@@ -1,12 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Usamos la base absoluta, necesaria para el build
+const repoName = '/business-wars-simulator/'; 
+
 export default defineConfig({
   plugins: [react()],
   
-  // 🔴 SOLUCIÓN FINAL: Usar './' (punto-slash)
-  // Esto obliga al build a generar rutas RELATIVAS.
-  base: './', 
+  // 🛑 CLAVE: Base para el BUILD. Esto corrige la carga de assets.
+  base: repoName, 
   
   server: {
     open: true, 
