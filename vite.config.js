@@ -4,13 +4,21 @@ import react from '@vitejs/plugin-react'
 // Define el nombre del repositorio
 const repoName = '/business-wars-simulator/'; 
 
-export default defineConfig({
-  plugins: [react()],
+export default defineConfig(({ command }) => {
   
-  // 🛑 CLAVE: La base debe ser la ruta absoluta del repositorio.
-  base: repoName, 
-  
-  server: {
-    open: true, 
+  // Determinamos si estamos en producción (comando 'build')
+  const isProd = command === 'build';
+
+  return {
+    plugins: [react()],
+    
+    // 🛑 CLAVE: 
+    // En 'build' (deploy), usa la base del repo.
+    // En 'serve' (dev), usa la raíz '/'.
+    base: isProd ? repoName : '/', 
+    
+    server: {
+      open: true, 
+    }
   }
 });

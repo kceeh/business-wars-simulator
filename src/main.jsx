@@ -3,11 +3,15 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 
-// 🛑 CLAVE: Usar HashRouter
+// 🛑 CLAVE: Usar HashRouter para evitar el 404 en deploy
 import { HashRouter } from 'react-router-dom'; 
 
-// CLAVE: El basename debe coincidir con la base de vite.config.js
-const BASE_PATH = '/business-wars-simulator/'; 
+// 🛑 CLAVE: 
+// En 'PROD' (deploy), usa la base del repo.
+// En 'DEV', usa la raíz '/'.
+const BASE_PATH = import.meta.env.PROD 
+    ? '/business-wars-simulator/' 
+    : '/'; 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
